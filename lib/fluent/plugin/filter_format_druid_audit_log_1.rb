@@ -28,11 +28,17 @@ module Fluent
       end
 
       def filter(_tag, _time, record)
+        new_record = format_record(record)
+        fix_timeseries_record(new_record)
+        new_record
+      end
+
+      def format_record(record)
         query_type = guess_query_type(record)
 
         new_record = record.except(query_key)
         new_record['query_type'] = query_type
-        new_record["#{query_type}_query".downcase] = record[query_key]
+        new_record["#{query_type}_query".downcase] = record[query_key].dup
         new_record
       end
 
@@ -41,6 +47,13 @@ module Fluent
                    'queryType') || (record.dig('query_result',
                                                'sqlQuery/time') && 'sql') || (record.dig(query_key,
                                                                                          'query') && 'sql') || 'unknown'
+      end
+
+      def fix_timeseries_record(record)
+        return unless record['query_type'] == 'timeseries'
+        return unless record['timeseries_query']['granularity']
+
+        record['timeseries_query']['granularity'] = record['timeseries_query']['granularity'].to_s
       end
     end
   end

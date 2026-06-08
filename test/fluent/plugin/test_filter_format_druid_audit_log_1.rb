@@ -86,6 +86,22 @@ class FormatDruidAuditLog1FilterTest < Test::Unit::TestCase
     },
     'intervals' => {},
     'filter' => {},
+    'granularity' => 'TEN_MINUTE',
+    'aggregations' => [],
+    'context' => {
+      'queryId' => 'uuid-xxx',
+      'sqlQueryId' => 'uuid-xxx'
+    }
+  }.freeze
+
+  DRUID_TIMESERIES_QUERY_2 = {
+    'queryType' => 'timeseries',
+    'dataSource' => {
+      'type' => 'table',
+      'name' => 'my_datasource'
+    },
+    'intervals' => {},
+    'filter' => {},
     'granularity' => {
       'type' => 'all'
     },
@@ -151,7 +167,7 @@ class FormatDruidAuditLog1FilterTest < Test::Unit::TestCase
       assert_equal expected_event, processed_event
     end
 
-    test 'it should format timeseries query audit log' do
+    test 'it should format timeseries query audit log 1' do
       druid_timeseries_audit_log_event = DRUID_EVENT_BASE_1.merge('query' => DRUID_TIMESERIES_QUERY_1)
 
       processed_events = filter(BASE_CONF, [druid_timeseries_audit_log_event])
@@ -164,6 +180,25 @@ class FormatDruidAuditLog1FilterTest < Test::Unit::TestCase
         'query_result' => DRUID_QUERY_RESULT_1,
         'query_type' => 'timeseries',
         'timeseries_query' => DRUID_TIMESERIES_QUERY_1
+      }
+
+      assert_equal expected_event, processed_event
+    end
+
+    test 'it should format timeseries query audit log' do
+      druid_timeseries_audit_log_event = DRUID_EVENT_BASE_1.merge('query' => DRUID_TIMESERIES_QUERY_2)
+
+      processed_events = filter(BASE_CONF, [druid_timeseries_audit_log_event])
+      assert_equal 1, processed_events.size
+
+      processed_event = processed_events[0]
+      expected_timeseries_query = DRUID_TIMESERIES_QUERY_2.merge('granularity' => '{"type" => "all"}')
+      expected_event = {
+        'timestamp' => TEST_TIME,
+        'remote_addr' => '11.12.13.14',
+        'query_result' => DRUID_QUERY_RESULT_1,
+        'query_type' => 'timeseries',
+        'timeseries_query' => expected_timeseries_query
       }
 
       assert_equal expected_event, processed_event
