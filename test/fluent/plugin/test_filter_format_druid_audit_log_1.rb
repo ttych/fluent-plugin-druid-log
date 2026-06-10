@@ -138,12 +138,13 @@ class FormatDruidAuditLog1FilterTest < Test::Unit::TestCase
       assert_equal 1, processed_events.size
 
       processed_event = processed_events[0]
+      expected_groupby_query = DRUID_GROUPBY_QUERY_1.merge('granularity' => '{}')
       expected_event = {
         'timestamp' => TEST_TIME,
         'remote_addr' => '11.12.13.14',
         'query_result' => DRUID_QUERY_RESULT_1,
         'query_type' => 'groupBy',
-        'groupby_query' => DRUID_GROUPBY_QUERY_1
+        'groupby_query' => expected_groupby_query
       }
 
       assert_equal expected_event, processed_event
@@ -156,12 +157,13 @@ class FormatDruidAuditLog1FilterTest < Test::Unit::TestCase
       assert_equal 1, processed_events.size
 
       processed_event = processed_events[0]
+      expected_scan_query = DRUID_SCAN_QUERY_1.merge('granularity' => '{}')
       expected_event = {
         'timestamp' => TEST_TIME,
         'remote_addr' => '11.12.13.14',
         'query_result' => DRUID_QUERY_RESULT_1,
         'query_type' => 'scan',
-        'scan_query' => DRUID_SCAN_QUERY_1
+        'scan_query' => expected_scan_query
       }
 
       assert_equal expected_event, processed_event

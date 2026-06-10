@@ -29,7 +29,7 @@ module Fluent
 
       def filter(_tag, _time, record)
         new_record = format_record(record)
-        fix_timeseries_record(new_record)
+        fix_record(new_record)
         new_record
       end
 
@@ -49,11 +49,15 @@ module Fluent
                                                                                          'query') && 'sql') || 'unknown'
       end
 
-      def fix_timeseries_record(record)
-        return unless record['query_type'] == 'timeseries'
-        return unless record['timeseries_query']['granularity']
+      def fix_record(record)
+        fix_record_query_granularity(record)
+      end
 
-        record['timeseries_query']['granularity'] = record['timeseries_query']['granularity'].to_s
+      def fix_record_query_granularity(record)
+        query_type = record['query_type'].downcase
+        return if record.dig("#{query_type}_query", 'granularity').nil?
+
+        record["#{query_type}_query"]['granularity'] = record["#{query_type}_query"]['granularity'].to_s
       end
     end
   end
