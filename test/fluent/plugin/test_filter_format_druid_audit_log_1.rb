@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 require 'helper'
+require 'json'
 require 'fluent/plugin/filter_format_druid_audit_log_1'
+
 
 class FormatDruidAuditLog1FilterTest < Test::Unit::TestCase
   setup do
@@ -112,9 +114,50 @@ class FormatDruidAuditLog1FilterTest < Test::Unit::TestCase
     }
   }.freeze
 
+  sub_test_case 'can handle query in json format' do
+    test 'it receives query in json format' do
+      druid_sql_audit_log_event = DRUID_EVENT_BASE_1.merge('query' => DRUID_SQL_QUERY_1.to_json)
+
+      processed_events = filter(BASE_CONF, [druid_sql_audit_log_event])
+      assert_equal 1, processed_events.size
+
+      processed_event = processed_events[0]
+      expected_event = {
+        'timestamp' => TEST_TIME,
+        'remote_addr' => '11.12.13.14',
+        'query_result' => DRUID_QUERY_RESULT_1,
+        'query_type' => 'sql',
+        'sql_query' => DRUID_SQL_QUERY_1
+      }
+
+      assert_equal expected_event, processed_event
+    end
+
+    test 'it receives query result in json format' do
+      druid_sql_audit_log_event = DRUID_EVENT_BASE_1.merge(
+        'query' => DRUID_SQL_QUERY_1.dup,
+        'query_result' => DRUID_QUERY_RESULT_1.to_json
+      )
+
+      processed_events = filter(BASE_CONF, [druid_sql_audit_log_event])
+      assert_equal 1, processed_events.size
+
+      processed_event = processed_events[0]
+      expected_event = {
+        'timestamp' => TEST_TIME,
+        'remote_addr' => '11.12.13.14',
+        'query_result' => DRUID_QUERY_RESULT_1,
+        'query_type' => 'sql',
+        'sql_query' => DRUID_SQL_QUERY_1
+      }
+
+      assert_equal expected_event, processed_event
+    end
+  end
+
   sub_test_case 'format audit log' do
     test 'it should format sql query audit log' do
-      druid_sql_audit_log_event = DRUID_EVENT_BASE_1.merge('query' => DRUID_SQL_QUERY_1)
+      druid_sql_audit_log_event = DRUID_EVENT_BASE_1.merge('query' => DRUID_SQL_QUERY_1.dup)
 
       processed_events = filter(BASE_CONF, [druid_sql_audit_log_event])
       assert_equal 1, processed_events.size
@@ -132,7 +175,7 @@ class FormatDruidAuditLog1FilterTest < Test::Unit::TestCase
     end
 
     test 'it should format groupby query audit log' do
-      druid_groupby_audit_log_event = DRUID_EVENT_BASE_1.merge('query' => DRUID_GROUPBY_QUERY_1)
+      druid_groupby_audit_log_event = DRUID_EVENT_BASE_1.merge('query' => DRUID_GROUPBY_QUERY_1.dup)
 
       processed_events = filter(BASE_CONF, [druid_groupby_audit_log_event])
       assert_equal 1, processed_events.size
@@ -151,7 +194,7 @@ class FormatDruidAuditLog1FilterTest < Test::Unit::TestCase
     end
 
     test 'it should format scan query audit log' do
-      druid_scan_audit_log_event = DRUID_EVENT_BASE_1.merge('query' => DRUID_SCAN_QUERY_1)
+      druid_scan_audit_log_event = DRUID_EVENT_BASE_1.merge('query' => DRUID_SCAN_QUERY_1.dup)
 
       processed_events = filter(BASE_CONF, [druid_scan_audit_log_event])
       assert_equal 1, processed_events.size
@@ -170,7 +213,7 @@ class FormatDruidAuditLog1FilterTest < Test::Unit::TestCase
     end
 
     test 'it should format timeseries query audit log 1' do
-      druid_timeseries_audit_log_event = DRUID_EVENT_BASE_1.merge('query' => DRUID_TIMESERIES_QUERY_1)
+      druid_timeseries_audit_log_event = DRUID_EVENT_BASE_1.merge('query' => DRUID_TIMESERIES_QUERY_1.dup)
 
       processed_events = filter(BASE_CONF, [druid_timeseries_audit_log_event])
       assert_equal 1, processed_events.size
@@ -188,7 +231,7 @@ class FormatDruidAuditLog1FilterTest < Test::Unit::TestCase
     end
 
     test 'it should format timeseries query audit log' do
-      druid_timeseries_audit_log_event = DRUID_EVENT_BASE_1.merge('query' => DRUID_TIMESERIES_QUERY_2)
+      druid_timeseries_audit_log_event = DRUID_EVENT_BASE_1.merge('query' => DRUID_TIMESERIES_QUERY_2.dup)
 
       processed_events = filter(BASE_CONF, [druid_timeseries_audit_log_event])
       assert_equal 1, processed_events.size

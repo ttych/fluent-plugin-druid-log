@@ -20,7 +20,7 @@ Example:
 
   <parse>
     @type regexp
-	expression /^(?<timestamp>[^\t]+)\t(?<remote_addr>[^\t]*)\t{1,2}(?<query_result>[^\t]+)\t(?<raw_query>.*)$/
+	expression /^(?<timestamp>[^\t]+)\t(?<remote_addr>[^\t]*)\t{1,2}(?<query_result>[^\t]+)\t(?<query>.*)$/
 	time_key timestamp
 	keep_time_key true
   </parse>

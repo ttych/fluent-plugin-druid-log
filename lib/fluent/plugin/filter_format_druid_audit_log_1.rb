@@ -11,9 +11,12 @@ module Fluent
       helpers :event_emitter, :timer
 
       DEFAULT_QUERY_KEY = 'query'
+      DEFAULT_QUERY_RESULT_KEY = 'query_result'
 
       desc 'Query key'
       config_param :query_key, :string, default: DEFAULT_QUERY_KEY
+      desc 'Query result key'
+      config_param :query_result_key, :string, default: DEFAULT_QUERY_RESULT_KEY
 
       def configure(conf)
         super
@@ -28,18 +31,22 @@ module Fluent
       end
 
       def filter(_tag, _time, record)
-        new_record = format_record(record)
+        new_record = format_record(record.dup)
         fix_record(new_record)
         new_record
       end
 
       def format_record(record)
-        query_type = guess_query_type(record)
+        [query_key, query_result_key].each do |key|
+          record[key] = JSON.parse(record[key]) if record[key].is_a? String
+        end
 
-        new_record = record.except(query_key)
-        new_record['query_type'] = query_type
-        new_record["#{query_type}_query".downcase] = record[query_key].dup
-        new_record
+        query_type = guess_query_type(record)
+        record['query_type'] = query_type
+
+        query_data = record.delete(query_key)
+        record["#{query_type}_query".downcase] = query_data
+        record
       end
 
       def guess_query_type(record)
