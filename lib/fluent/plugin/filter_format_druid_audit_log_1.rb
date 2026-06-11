@@ -38,7 +38,9 @@ module Fluent
 
       def format_record(record)
         [query_key, query_result_key].each do |key|
-          record[key] = JSON.parse(record[key]) if record[key].is_a? String
+          if record[key].is_a? String
+            record[key] = record[key].size.positive? ? JSON.parse(record[key]) : {}
+          end
         end
 
         query_type = guess_query_type(record)

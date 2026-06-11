@@ -4,7 +4,6 @@ require 'helper'
 require 'json'
 require 'fluent/plugin/filter_format_druid_audit_log_1'
 
-
 class FormatDruidAuditLog1FilterTest < Test::Unit::TestCase
   setup do
     Fluent::Test.setup

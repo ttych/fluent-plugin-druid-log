@@ -21,7 +21,7 @@ module Fluent
       def configure(conf)
         super
 
-        return unless query_key.nil? and query_result.nil?
+        return unless query_key.nil? && query_result.nil?
 
         raise Fluent::ConfigError, 'query_key should be specified'
       end
@@ -39,7 +39,7 @@ module Fluent
       def format_record(record)
         [query_key, query_result_key].each do |key|
           if record[key].is_a? String
-            record[key] = record[key].size > 0 ? JSON.parse(record[key]) : {}
+            record[key] = record[key].size.positive? ? JSON.parse(record[key]) : {}
           end
         end
 
@@ -62,7 +62,7 @@ module Fluent
 
       def fix_record_query_granularity(record)
         update_all_key_value(record, 'granularity') do |value|
-          value.to_s unless value.nil?
+          value&.to_s
         end
       end
 
@@ -73,9 +73,7 @@ module Fluent
             next
           end
 
-          if rvalue.is_a?(Hash)
-            update_all_key_value(rvalue, key, &block)
-          end
+          update_all_key_value(rvalue, key, &block) if rvalue.is_a?(Hash)
         end
       end
     end
