@@ -38,7 +38,9 @@ module Fluent
 
       def format_record(record)
         [query_key, query_result_key].each do |key|
-          record[key] = JSON.parse(record[key]) if record[key].is_a? String
+          if record[key].is_a? String
+            record[key] = record[key].size > 0 ? JSON.parse(record[key]) : {}
+          end
         end
 
         query_type = guess_query_type(record)
@@ -59,9 +61,22 @@ module Fluent
       end
 
       def fix_record_query_granularity(record)
-        return if record.dig(query_key, 'granularity').nil?
+        update_all_key_value(record, 'granularity') do |value|
+          value.to_s unless value.nil?
+        end
+      end
 
-        record[query_key]['granularity'] = record[query_key]['granularity'].to_s
+      def update_all_key_value(record, key, &block)
+        record.each do |rkey, rvalue|
+          if rkey.to_s == key
+            record[rkey] = yield(rvalue) if block_given?
+            next
+          end
+
+          if rvalue.is_a?(Hash)
+            update_all_key_value(rvalue, key, &block)
+          end
+        end
       end
     end
   end
