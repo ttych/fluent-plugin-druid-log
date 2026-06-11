@@ -22,6 +22,7 @@ class FormatDruidAuditLog1FilterTest < Test::Unit::TestCase
 
       assert filter_instance
       assert_equal 'query', filter_instance.query_key
+      assert_equal 'query_result', filter_instance.query_result_key
     end
   end
 
