@@ -61,8 +61,10 @@ module Fluent
       end
 
       def fix_record_query_granularity(record)
-        update_all_key_value(record, 'granularity') do |value|
-          value&.to_s
+        %w[granularity matchValue].each do |key_name|
+          update_all_key_value(record, key_name) do |value|
+            value&.to_s
+          end
         end
       end
 

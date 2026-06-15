@@ -96,24 +96,6 @@ class FormatDruidAuditLog2FilterTest < Test::Unit::TestCase
     }
   }.freeze
 
-  DRUID_TIMESERIES_QUERY_2 = {
-    'queryType' => 'timeseries',
-    'dataSource' => {
-      'type' => 'table',
-      'name' => 'my_datasource'
-    },
-    'intervals' => {},
-    'filter' => {},
-    'granularity' => {
-      'type' => 'all'
-    },
-    'aggregations' => [],
-    'context' => {
-      'queryId' => 'uuid-xxx',
-      'sqlQueryId' => 'uuid-xxx'
-    }
-  }.freeze
-
   sub_test_case 'can handle query in json format' do
     test 'it receives query in json format' do
       druid_sql_audit_log_event = DRUID_EVENT_BASE_1.merge('query' => DRUID_SQL_QUERY_1.to_json)
@@ -212,7 +194,7 @@ class FormatDruidAuditLog2FilterTest < Test::Unit::TestCase
       assert_equal expected_event, processed_event
     end
 
-    test 'it should format timeseries query audit log 1' do
+    test 'it should format timeseries query audit log' do
       druid_timeseries_audit_log_event = DRUID_EVENT_BASE_1.merge('query' => DRUID_TIMESERIES_QUERY_1.dup)
 
       processed_events = filter(BASE_CONF, [druid_timeseries_audit_log_event])
@@ -229,15 +211,48 @@ class FormatDruidAuditLog2FilterTest < Test::Unit::TestCase
 
       assert_equal expected_event, processed_event
     end
+  end
 
-    test 'it should format timeseries query audit log' do
-      druid_timeseries_audit_log_event = DRUID_EVENT_BASE_1.merge('query' => DRUID_TIMESERIES_QUERY_2.dup)
+  sub_test_case 'format audit log' do
+    test 'it serializes granularity keys' do
+      druid_timeseries_audit_log_event = DRUID_EVENT_BASE_1.merge('query' => DRUID_TIMESERIES_QUERY_1.merge(
+        'granularity' => {
+          'type' => 'all'
+        }
+      ))
 
       processed_events = filter(BASE_CONF, [druid_timeseries_audit_log_event])
       assert_equal 1, processed_events.size
 
       processed_event = processed_events[0]
-      expected_timeseries_query = DRUID_TIMESERIES_QUERY_2.merge('granularity' => '{"type" => "all"}')
+      expected_timeseries_query = DRUID_TIMESERIES_QUERY_1.merge('granularity' => '{"type" => "all"}')
+      expected_event = {
+        'timestamp' => TEST_TIME,
+        'remote_addr' => '11.12.13.14',
+        'query_result' => DRUID_QUERY_RESULT_1,
+        'query_type' => 'timeseries',
+        'query' => expected_timeseries_query
+      }
+
+      assert_equal expected_event, processed_event
+    end
+
+    test 'it serializes matchValue keys' do
+      druid_timeseries_audit_log_event = DRUID_EVENT_BASE_1.merge('query' => DRUID_TIMESERIES_QUERY_1.merge(
+        'filter' => {
+          'matchValue' => 10
+        }
+      ))
+
+      processed_events = filter(BASE_CONF, [druid_timeseries_audit_log_event])
+      assert_equal 1, processed_events.size
+
+      processed_event = processed_events[0]
+      expected_timeseries_query = DRUID_TIMESERIES_QUERY_1.merge(
+        'filter' => {
+          'matchValue' => '10'
+        }
+      )
       expected_event = {
         'timestamp' => TEST_TIME,
         'remote_addr' => '11.12.13.14',
