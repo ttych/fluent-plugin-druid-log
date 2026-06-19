@@ -263,6 +263,41 @@ class FormatDruidAuditLog2FilterTest < Test::Unit::TestCase
 
       assert_equal expected_event, processed_event
     end
+
+    test 'it serializes nested matchValue keys' do
+      druid_timeseries_audit_log_event = DRUID_EVENT_BASE_1.merge('query' => DRUID_TIMESERIES_QUERY_1.merge(
+        'filter' => {
+          'fields' => [
+            { 'field' => {
+              'matchValue' => 10
+            } }
+          ]
+        }
+      ))
+
+      processed_events = filter(BASE_CONF, [druid_timeseries_audit_log_event])
+      assert_equal 1, processed_events.size
+
+      processed_event = processed_events[0]
+      expected_timeseries_query = DRUID_TIMESERIES_QUERY_1.merge(
+        'filter' => {
+          'fields' => [
+            { 'field' => {
+              'matchValue' => '10'
+            } }
+          ]
+        }
+      )
+      expected_event = {
+        'timestamp' => TEST_TIME,
+        'remote_addr' => '11.12.13.14',
+        'query_result' => DRUID_QUERY_RESULT_1,
+        'query_type' => 'timeseries',
+        'query' => expected_timeseries_query
+      }
+
+      assert_equal expected_event, processed_event
+    end
   end
 
   private

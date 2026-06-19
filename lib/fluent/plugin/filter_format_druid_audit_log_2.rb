@@ -58,24 +58,43 @@ module Fluent
 
       def fix_record(record)
         fix_record_query_granularity(record)
+        fix_record_query_match_value(record)
+        fix_record_query_datasource_rows(record)
       end
 
       def fix_record_query_granularity(record)
-        %w[granularity matchValue].each do |key_name|
-          update_all_key_value(record, key_name) do |value|
-            value&.to_s
-          end
+        update_all_key_value(record['query'], 'granularity') do |value|
+          value&.to_s
+        end
+      end
+
+      def fix_record_query_match_value(record)
+        update_all_key_value(record.dig('query', 'filter'), 'matchValue') do |value|
+          value&.to_s
+        end
+      end
+
+      def fix_record_query_datasource_rows(record)
+        update_all_key_value(record.dig('query', 'dataSource'), 'rows') do |value|
+          value&.to_s
         end
       end
 
       def update_all_key_value(record, key, &block)
-        record.each do |rkey, rvalue|
-          if rkey.to_s == key
-            record[rkey] = yield(rvalue) if block_given?
-            next
-          end
+        case record
+        when Hash
+          record.each do |rkey, rvalue|
+            if rkey.to_s == key
+              record[rkey] = yield(rvalue) if block_given?
+              next
+            end
 
-          update_all_key_value(rvalue, key, &block) if rvalue.is_a?(Hash)
+            update_all_key_value(rvalue, key, &block)
+          end
+        when Array
+          record.each do |item|
+            update_all_key_value(item, key, &block)
+          end
         end
       end
     end
