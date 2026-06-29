@@ -58,8 +58,6 @@ module Fluent
 
       def fix_record(record)
         fix_record_query_granularity(record)
-        fix_record_query_match_value(record)
-        fix_record_query_datasource_rows(record)
       end
 
       def fix_record_query_granularity(record)
